@@ -1,0 +1,51 @@
+{
+	"Name": "Next Zoom Meeting",
+	"Version": "0.1.0.0",
+	"Author": "Bernardo Farah",
+	"Actions": [
+		{
+			"Name": "Join Meeting",
+			"UUID": "com.bernardo-farah.next-zoom-meeting.join",
+			"Icon": "imgs/actions/zoom/join",
+			"Tooltip": "Joins the next zoom meeting",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Title": "No next\nmeeting",
+					"Image": "imgs/actions/zoom/join",
+					"TitleAlignment": "middle",
+					"FontSize": 11
+				},
+				{
+					"Title": "No next\nmeeting",
+					"Image": "imgs/actions/zoom/join-disabled",
+					"TitleAlignment": "middle",
+					"FontSize": 11
+				}
+			]
+		}
+	],
+	"Category": "Next Zoom Meeting",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "See and join your next zoom meeting based on your Apple calendar",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 2,
+	"Software": {
+		"MinimumVersion": "6.5"
+	},
+	"URL": "https://github.com/berfarah/next-zoom-meeting",
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "10.15"
+		}
+	],
+	"Nodejs": {
+		"Version": "20",
+		"Debug": "enabled"
+	},
+	"UUID": "com.bernardo-farah.next-zoom-meeting"
+}
