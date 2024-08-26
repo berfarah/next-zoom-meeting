@@ -49,7 +49,7 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 	onWillAppear(ev: WillAppearEvent<NextMeetingSettings>): void | Promise<void> {
 		this._interval = setInterval(() => {
 			// We can move the go logic here so we don't have to run a server
-			exec(appleScript).then(({ stdout, stderr }) => {
+			exec(`/usr/bin/env osascript -l JavaScript ${appleScript}`).then(({ stdout, stderr }) => {
 				const json = JSON.parse(stdout);
 				return json;
 			}).then((data) => {
