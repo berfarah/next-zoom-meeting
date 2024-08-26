@@ -6,7 +6,7 @@
 		{
 			"Name": "Join Meeting",
 			"UUID": "com.bernardo-farah.next-zoom-meeting.join",
-			"Icon": "imgs/actions/zoom/join",
+			"Icon": "imgs/actions/zoom/join-actionicon",
 			"Tooltip": "Joins the next zoom meeting",
 			"Controllers": [
 				"Keypad"
