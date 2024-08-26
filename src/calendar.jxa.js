@@ -22,6 +22,14 @@ tomorrow.setDate(tomorrow.getDate()+1);
 
 // Get our calendar events from EventKit (ObjC bridge is much faster).
 const store = $.EKEventStore.alloc.initWithAccessToEntityTypes($.EKEntityMaskEvent);
+store.requestFullAccessToEventsWithCompletion(((granted, err) => {
+  if (!granted) {
+    console.log("WARN: Need access to Calendar. Check your privacy settings to ensure access was granted.")
+  }
+  if (err) {
+    console.log("ERROR: ", err);
+  }
+}));
 const calendars = store.calendarsForEntityType($.EKEntityTypeEvent);
 const predicate = store.predicateForEventsWithStartDateEndDateCalendars(today, tomorrow, calendars);
 const allEvents = store.eventsMatchingPredicate(predicate).js;
