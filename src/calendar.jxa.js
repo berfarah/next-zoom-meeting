@@ -133,7 +133,7 @@ const humanTime = (time) => {
 const events = allEvents
   .filter((event) => event.startDate.js < soon && now < event.endDate.js)
   .filter((event) => !event.isAllDay)
-  .sort((a, b) => a.startDate.js > b.startDate.js)
+  .sort((a, b) => b.startDate.js.getTime() - a.startDate.js.getTime())
   .map((event) => ({
     title: event.title.js,
     location: event.location.js,

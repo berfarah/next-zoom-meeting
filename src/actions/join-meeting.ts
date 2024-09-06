@@ -33,6 +33,16 @@ enum State {
 	Inactive,
 };
 
+const dataToEvent = (data: any): Event => ({
+	title: data.title,
+	location: data.location,
+	start: data.startDate,
+	end: data.endDate,
+	start_relative: data.start_relative,
+	zoom_link: data.zoom_link,
+	interview: data.interview,
+});
+
 /**
  * An action that maintains a background state of the next upcoming meeting, and joins said meeting
  * upon button press.
@@ -57,16 +67,19 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 					throw new Error("No new meeting");
 				}
 
-				// WE just care about the first event
-				this._event = {
-					title: data[0].title,
-					location: data[0].location,
-					start: data[0].start,
-					end: data[0].end,
-					start_relative: data[0].start_relative,
-					zoom_link: data[0].zoom_link,
-					interview: data[0].interview,
-				};
+				let events = data.map(dataToEvent);
+
+				// If we have multiple events, see if we have any with a zoom meeting
+				if (events.length > 1 && events.find((e) => !!e.zoom_link && e.zoom_link !== "")) {
+					events = events.filter((e) => !!e.zoom_link && e.zoom_link !== "");
+				}
+
+				// events = events.sort((a, b) => b.start.getTime() - a.start.getTime());
+
+				logger.info("events:"+events.map((i) => i.title).join(", "));
+
+				// Default to the first event
+				this._event = events[0];
 
 				let title = ""
 				if (this._event.interview && this._event.interview.name && this._event.interview.name !== "") {
