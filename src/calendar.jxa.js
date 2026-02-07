@@ -39,24 +39,41 @@ const now = new Date(Date.now());
 const soon = new Date(now.getTime());
 soon.setMinutes(soon.getMinutes()+5);
 
-const greenHouseRegexp = /https:\/\/samsara.greenhouse.io[^\s"']+/;
-const nameRegexp = /^Virtual Interview (?<name>[\w\s]+) for (?<position>[^-]+)/;
-const entryToInterview = (entry) => {
-  const interview = {};
-  let match = false;
+const interviewProviders = [
+  // Greenhouse
+  (notes) => {
+    const match = /https:\/\/[^\s"']+\.greenhouse\.io[^\s"']+/.exec(notes);
+    if (!match) return null;
+    const link = match[0];
+    return { link, scorecard: link + "#scorecard", guide: link + "#interview_guide" };
+  },
+  // Ashby
+  (notes) => {
+    const match = /https:\/\/app\.ashbyhq\.com[^\s"']+/.exec(notes);
+    if (!match) return null;
+    const link = match[0];
+    return { link, scorecard: link + "/feedback", guide: link + "/briefing" };
+  },
+];
 
-  const ghLink = greenHouseRegexp.exec(entry.notes);
-  if (ghLink) {
-    match = true;
-    interview.link = ghLink[0];
-    interview.scorecard = ghLink[0] + "#scorecard";
-    interview.guide = ghLink[0] + "#interview_guide";
+const nameRegexp = /^(?:Virtual )?Interview (?<name>[\w\s]+) for (?<position>[^-]+)/;
+const entryToInterview = (entry) => {
+  let interview = {};
+
+  for (const provider of interviewProviders) {
+    const result = provider(entry.notes);
+    if (result) {
+      interview = result;
+      break;
+    }
   }
 
-  const nameMatch = nameRegexp.exec(entry.title);
-  if (match && nameMatch) {
-    interview.name = nameMatch.groups.name;
-    interview.position = nameMatch.groups.position;
+  if (interview.link) {
+    const nameMatch = nameRegexp.exec(entry.title);
+    if (nameMatch) {
+      interview.name = nameMatch.groups.name;
+      interview.position = nameMatch.groups.position;
+    }
   }
 
   return interview;
