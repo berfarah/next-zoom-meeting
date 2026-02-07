@@ -24,7 +24,7 @@ interface Event {
 
 	interview: Interview;
 	start_relative: string;
-	zoom_link: string;
+	meeting_link: string;
 }
 
 const noNext = "No next\nmeeting";
@@ -39,7 +39,7 @@ const dataToEvent = (data: any): Event => ({
 	start: data.startDate,
 	end: data.endDate,
 	start_relative: data.start_relative,
-	zoom_link: data.zoom_link,
+	meeting_link: data.meeting_link,
 	interview: data.interview,
 });
 
@@ -70,8 +70,8 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 				let events = data.map(dataToEvent);
 
 				// If we have multiple events, see if we have any with a zoom meeting
-				if (events.length > 1 && events.find((e) => !!e.zoom_link && e.zoom_link !== "")) {
-					events = events.filter((e) => !!e.zoom_link && e.zoom_link !== "");
+				if (events.length > 1 && events.find((e) => !!e.meeting_link && e.meeting_link !== "")) {
+					events = events.filter((e) => !!e.meeting_link && e.meeting_link !== "");
 				}
 
 				// events = events.sort((a, b) => b.start.getTime() - a.start.getTime());
@@ -93,7 +93,7 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 					title = `${truncate}\n${this._event.start_relative}`;
 				}
 
-				let state = this._event.zoom_link ? State.Active : State.Inactive;
+				let state = this._event.meeting_link ? State.Active : State.Inactive;
 				ev.action.setState(state).then(() => ev.action.setTitle(title));
 			}).catch((err) => {
 				logger.warn("Error with calendar: ",err);
@@ -116,7 +116,7 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 	async onKeyDown(ev: KeyDownEvent<NextMeetingSettings>): Promise<void> {
 		if (this._event === undefined) return;
 
-		const links = [this._event.zoom_link];
+		const links = [this._event.meeting_link];
 
 		if (this._event.interview) {
 			links.unshift(

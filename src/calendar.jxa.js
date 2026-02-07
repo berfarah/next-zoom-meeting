@@ -62,7 +62,7 @@ const entryToInterview = (entry) => {
   return interview;
 };
 
-const zoomRegexp = /https:\/\/(?<host>[^\s"'<]*.zoom.us)\/j\/(?<id>\w+)(?<params>[^\s"'<]*)/;
+const zoomRegexp = /https:\/\/(?<host>(?:[^\s"'<]+\.)?zoom\.us)\/j\/(?<id>\w+)(?<params>[^\s"'<]*)/;
 const pwdRegexp = /pwd=(?<pwd>[\w\.]+)/;
 
 const findZoomLink = (str) => {
@@ -78,12 +78,24 @@ const findZoomLink = (str) => {
   return `zoommtg://${host}/join?confno=${id}&pwd=${pwd}`;
 };
 
-const entryToZoomLink = (entry) => {
-  let link = findZoomLink(entry.location);
-  if (!link) {
-    link = findZoomLink(entry.notes);
+const googleMeetRegexp = /https:\/\/meet\.google\.com\/[a-z]+-[a-z]+-[a-z]+/;
+
+const findGoogleMeetLink = (str) => {
+  const match = googleMeetRegexp.exec(str);
+  return match ? match[0] : "";
+};
+
+const meetingProviders = [
+  findZoomLink,
+  findGoogleMeetLink,
+];
+
+const entryToMeetingLink = (entry) => {
+  for (const findLink of meetingProviders) {
+    const link = findLink(entry.location) || findLink(entry.notes);
+    if (link) return link;
   }
-  return link;
+  return "";
 };
 
 const humanTime = (time) => {
@@ -141,7 +153,7 @@ const events = allEvents
     endDate: event.endDate.js,
     notes: event.notes.js,
   })).map((event) => {
-    event.zoom_link = entryToZoomLink(event);
+    event.meeting_link = entryToMeetingLink(event);
     event.interview = entryToInterview(event);
     event.start_relative = humanTime(event.startDate);
     return event;
