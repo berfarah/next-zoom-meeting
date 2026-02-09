@@ -1,0 +1,7 @@
+{
+	"compilerOptions": {
+		"checkJs": true,
+		"types": ["@jxa/global-type"]
+	},
+	"include": ["src/**/*.js"]
+}
