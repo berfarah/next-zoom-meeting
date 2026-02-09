@@ -1,5 +1,4 @@
 import streamDeck, { action, KeyDownEvent, SingletonAction, WillAppearEvent, WillDisappearEvent } from "@elgato/streamdeck";
-import { get } from "node:http";
 import { execFile as execFile_async } from "node:child_process";
 import appleScript from "../calendar.jxa.js";
 import { promisify } from "node:util";
@@ -59,9 +58,13 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 	onWillAppear(ev: WillAppearEvent<NextMeetingSettings>): void | Promise<void> {
 		this._interval = setInterval(() => {
 			// We can move the go logic here so we don't have to run a server
-			execFile("/usr/bin/env", ["osascript", "-l", "JavaScript", appleScript]).then(({ stdout, stderr }) => {
-				const json = JSON.parse(stdout);
-				return json;
+			execFile("/usr/bin/env", ["osascript", "-l", "JavaScript", appleScript]).then(({ stdout }) => {
+				try {
+					return JSON.parse(stdout);
+				} catch (e) {
+					logger.debug("Failed to parse calendar output: ", stdout);
+					return [];
+				}
 			}).then((data) => {
 				if (!Array.isArray(data) || data.length < 1) {
 					throw new Error("No new meeting");
@@ -69,12 +72,11 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 
 				let events = data.map(dataToEvent);
 
-				// If we have multiple events, see if we have any with a zoom meeting
-				if (events.length > 1 && events.find((e) => !!e.meeting_link && e.meeting_link !== "")) {
-					events = events.filter((e) => !!e.meeting_link && e.meeting_link !== "");
+				// If we have multiple events, prefer those with a meeting link
+				const withLinks = events.filter((e) => !!e.meeting_link);
+				if (events.length > 1 && withLinks.length > 0) {
+					events = withLinks;
 				}
-
-				// events = events.sort((a, b) => b.start.getTime() - a.start.getTime());
 
 				logger.info("events:"+events.map((i) => i.title).join(", "));
 
@@ -82,18 +84,16 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 				this._event = events[0];
 
 				let title = ""
-				if (this._event.interview && this._event.interview.name && this._event.interview.name !== "") {
+				if (this._event.interview?.name) {
 					title = [this._event.interview.name, this._event.interview.position, this._event.start_relative].filter((part) => part !== "").join("\n");
 				} else {
-					let tempTitle = this._event.title;
-					if (this._event.title.length > 30) {
-						tempTitle = this._event.title.slice(0, 27) + "...";
-					}
-					let truncate = wrap(tempTitle, {width: 12, trim: true});
-					title = `${truncate}\n${this._event.start_relative}`;
+					const truncated = this._event.title.length > 30
+						? this._event.title.slice(0, 27) + "..."
+						: this._event.title;
+					title = `${wrap(truncated, {width: 12, trim: true})}\n${this._event.start_relative}`;
 				}
 
-				let state = this._event.meeting_link ? State.Active : State.Inactive;
+				const state = this._event.meeting_link ? State.Active : State.Inactive;
 				ev.action.setState(state).then(() => ev.action.setTitle(title));
 			}).catch((err) => {
 				logger.warn("Error with calendar: ",err);
@@ -103,11 +103,10 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 	}
 
 	onWillDisappear(ev: WillDisappearEvent<NextMeetingSettings>): void | Promise<void> {
-		if (this._interval) clearTimeout(this._interval);
+		if (this._interval) clearInterval(this._interval);
 		this._interval = undefined;
 		this._event = undefined;
 		ev.action.setState(State.Inactive);
-		// ev.action.setTitle(noNext);
 	}
 
 	/**
@@ -128,7 +127,7 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 		// Open all links
 		Promise.all(links.map((link) => execFile("open", [link]))).catch((e) => {
 			logger.warn("Unable to open meeting:\n" + e);
-		}).then(() => {});
+		});
 	}
 }
 
@@ -139,11 +138,3 @@ type NextMeetingSettings = {
 	binaryPath: string;
 };
 
-/**
- * State for {@link JoinMeeting}.
- */
-type JoinState = {
-	name: string;
-	link: string;
-	timeString: string;
-};
