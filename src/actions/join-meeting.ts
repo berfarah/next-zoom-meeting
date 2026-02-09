@@ -1,10 +1,10 @@
 import streamDeck, { action, KeyDownEvent, SingletonAction, WillAppearEvent, WillDisappearEvent } from "@elgato/streamdeck";
 import { get } from "node:http";
-import { exec as exec_async } from "node:child_process";
+import { execFile as execFile_async } from "node:child_process";
 import appleScript from "../calendar.jxa.js";
 import { promisify } from "node:util";
 import wrap from "word-wrap";
-const exec = promisify(exec_async);
+const execFile = promisify(execFile_async);
 
 const logger = streamDeck.logger.createScope("nextmeeting");
 
@@ -59,7 +59,7 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 	onWillAppear(ev: WillAppearEvent<NextMeetingSettings>): void | Promise<void> {
 		this._interval = setInterval(() => {
 			// We can move the go logic here so we don't have to run a server
-			exec(`/usr/bin/env osascript -l JavaScript ${appleScript}`).then(({ stdout, stderr }) => {
+			execFile("/usr/bin/env", ["osascript", "-l", "JavaScript", appleScript]).then(({ stdout, stderr }) => {
 				const json = JSON.parse(stdout);
 				return json;
 			}).then((data) => {
@@ -126,7 +126,7 @@ export class JoinMeeting extends SingletonAction<NextMeetingSettings> {
 		}
 
 		// Open all links
-		Promise.all(links.map((link) => exec(`open "${link}"`))).catch((e) => {
+		Promise.all(links.map((link) => execFile("open", [link]))).catch((e) => {
 			logger.warn("Unable to open meeting:\n" + e);
 		}).then(() => {});
 	}
